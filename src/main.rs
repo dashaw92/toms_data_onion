@@ -15,21 +15,14 @@ fn main() {
 }
 
 fn layer0() {
-    let layer0 = read_to_string("base.txt").expect("Missing base.txt!");
-    let encoded: String = find_payload(layer0);
-    let ascii85 = ASCII85::new(encoded);
-    let out = ascii85.decode();
-    let mut layer1 = File::create("layer1.txt").unwrap();
-    layer1.write_all(out.as_bytes()).unwrap();
+    let solved = decode_ascii85("base.txt");
+    write_output("layer1.txt", solved);
 }
 
 fn layer1() {
-    let layer1 = read_to_string("layer1.txt").expect("Missing layer1.txt!");
-    let encoded = find_payload(layer1);
-    let ascii85: String = ASCII85::new(encoded).decode();
+    let ascii85: String = decode_ascii85("layer1.txt");
     let solved = layer1::process(ascii85);
-    let mut layer2 = File::create("layer2.txt").unwrap();
-    layer2.write_all(solved.as_bytes()).unwrap();
+    write_output("layer2.txt", solved);
 }
 
 fn find_payload(input: String) -> String {
@@ -39,4 +32,15 @@ fn find_payload(input: String) -> String {
         .skip(2)
         .flat_map(|line| line.chars())
         .collect()
+}
+
+fn decode_ascii85(path: &str) -> String {
+    let file = read_to_string(path).expect("Missing file");
+    let encoded: String = find_payload(file);
+    ASCII85::new(encoded).decode()
+}
+
+fn write_output(path: &str, contents: String) {
+    let mut file = File::create(path).unwrap();
+    file.write_all(contents.as_bytes()).unwrap();
 }
