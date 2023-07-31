@@ -2,6 +2,7 @@ use std::{fs::{read_to_string, File}, io::Write};
 
 mod ascii85;
 mod layer1;
+mod layer2;
 
 use ascii85::ASCII85;
 
@@ -12,17 +13,28 @@ fn main() {
     layer0();
     println!("- Layer 1...");
     layer1();
+    println!("- Layer 2...");
+    layer2();
 }
 
+/// ASCII85
 fn layer0() {
     let solved = decode_ascii85("base.txt");
     write_output("layer1.txt", solved);
 }
 
+/// Bit flip and rotation
 fn layer1() {
-    let ascii85: String = decode_ascii85("layer1.txt");
+    let ascii85 = decode_ascii85("layer1.txt");
     let solved = layer1::process(ascii85);
     write_output("layer2.txt", solved);
+}
+
+/// Parity bits
+fn layer2() {
+    let ascii85 = decode_ascii85("layer2.txt");
+    let solved = layer2::process(ascii85);
+    write_output("layer3.txt", solved);
 }
 
 fn find_payload(input: String) -> String {
