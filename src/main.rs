@@ -26,6 +26,5 @@ fn find_payload(input: String) -> String {
         .skip_while(|line| !line.contains("Payload"))
         .skip(2)
         .flat_map(|line| line.chars())
-        .filter(|c| !c.is_whitespace())
         .collect()
 }
