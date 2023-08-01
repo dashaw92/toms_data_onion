@@ -1,9 +1,12 @@
 use std::{fs::{read_to_string, File}, io::Write};
 
 mod ascii85;
+mod ipv4;
+
 mod layer1;
 mod layer2;
 mod layer3;
+mod layer4;
 
 use ascii85::ASCII85;
 
@@ -18,6 +21,8 @@ fn main() {
     layer2();
     println!("- Layer 3...");
     layer3();
+    println!("- Layer 4...");
+    layer4();
 }
 
 /// ASCII85
@@ -45,6 +50,13 @@ fn layer3() {
     let payload = decode_ascii85("layer3.txt");
     let solved = layer3::process(payload);
     write_output("layer4.txt", solved);
+}
+
+/// Packets!
+fn layer4() {
+    let payload = decode_ascii85("layer4.txt");
+    let solved = layer4::process(payload);
+    write_output("layer5.txt", solved);
 }
 
 fn find_payload(input: String) -> String {
