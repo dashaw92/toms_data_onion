@@ -4,17 +4,19 @@ pub mod byte_reader;
 
 use byte_reader::BudgetByteorder;
 
+use crate::ipv4::byte_reader::ByteReader;
+
 #[derive(Clone, Debug)]
 pub struct V4Packet {
-    version: u8,
-    ihl: u8,
-    length: u16,
-    ttl: u8,
-    proto: u8,
-    hdr_checksum: u16,
-    source: u32,
-    dest: u32,
-    pub data: Vec<u8>,
+    pub version: u8,
+    pub ihl: u8,
+    pub length: u16,
+    pub ttl: u8,
+    pub proto: u8,
+    pub hdr_checksum: u16,
+    pub source: u32,
+    pub dest: u32,
+    pub udp: UDP,
 }
 
 impl V4Packet {
@@ -38,7 +40,7 @@ impl V4Packet {
         let dest = buf.read_u32()?;
 
         let data_len = (length - (ihl as u16 * 32 / 8)) as usize;
-        let data = buf.read_many_u8(data_len)?;
+        let udp = UDP::parse(buf.read_many_u8(data_len)?)?;
 
         Some(Self {
             version,
@@ -49,16 +51,44 @@ impl V4Packet {
             hdr_checksum,
             source,
             dest,
-            data,
+            udp,
         })
     }
 }
 
+pub fn dotted_to_decimal(ip: [u8; 4]) -> u32 {
+    ip.iter()
+        .enumerate()
+        .map(|(idx, &octet)| octet as u32 * 256u32.pow(3 - idx as u32))
+        .sum()
+}
+
 #[derive(Clone, Debug)]
-struct UDP {
-    source_port: u16,
-    dest_port: u16,
-    length: u16,
-    checksum: u16,
-    data: Vec<u8>,
+pub struct UDP {
+    pub source_port: u16,
+    pub dest_port: u16,
+    pub length: u16,
+    pub checksum: u16,
+    pub data: Vec<u8>,
+}
+
+impl UDP {
+    fn parse(bytes: Vec<u8>) -> Option<Self> {
+        let mut reader = ByteReader::new(&bytes);
+
+        let source_port = reader.read_u16()?;
+        let dest_port = reader.read_u16()?;
+        let length = reader.read_u16()?;
+        let checksum = reader.read_u16()?;
+
+        let data = reader.read_many_u8(length as usize - 8)?;
+        
+        Some(UDP {
+            source_port,
+            dest_port,
+            length,
+            checksum,
+            data,
+        })
+    }
 }
