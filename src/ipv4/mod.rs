@@ -36,7 +36,9 @@ impl V4Packet {
         let hdr_checksum = buf.read_u16()?;
         let source = buf.read_u32()?;
         let dest = buf.read_u32()?;
-        let data = buf.read_many_u8(length as usize - 20)?;
+
+        let data_len = (length - (ihl as u16 * 32 / 8)) as usize;
+        let data = buf.read_many_u8(data_len)?;
 
         Some(Self {
             version,
