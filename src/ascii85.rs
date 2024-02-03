@@ -31,19 +31,26 @@ impl ASCII85 {
             })
     }
 
-    /// Converts a bit pattern into an array of decoded ASCII chars.
-    fn bits_to_ascii(bits: u32) -> [char; 4] {
-        let mut out = ['\0'; 4];
+    /// Converts a bit pattern into an array of decoded ASCII.
+    fn bits_to_ascii(bits: u32) -> [u8; 4] {
+        let mut out = [0; 4];
         
         //Every 8 bits represents a single decoded ASCII char
-        out[0] = (bits >> 24 & 0xFF) as u8 as char;
-        out[1] = (bits >> 16 & 0xFF) as u8 as char;
-        out[2] = (bits >> 8  & 0xFF) as u8 as char;
-        out[3] = (bits >> 0  & 0xFF) as u8 as char;
+        out[0] = (bits >> 24 & 0xFF) as u8;
+        out[1] = (bits >> 16 & 0xFF) as u8;
+        out[2] = (bits >> 8  & 0xFF) as u8;
+        out[3] = (bits >> 0  & 0xFF) as u8;
         out
     }
 
-    pub fn decode(mut self) -> String {        
+    pub fn decode_to_string(self) -> String {
+        let bytes = self.decode();
+        bytes.into_iter()
+            .map(|byte| byte as char)
+            .collect()
+    }
+
+    pub fn decode(mut self) -> Vec<u8> {        
         //Input length must be divisible by 5
         let needed = 5 - self.encoded.len() % 5 + 1;
         while self.encoded.len() % 5 != 0 {
@@ -51,14 +58,17 @@ impl ASCII85 {
         }
 
         //Split the input into chunks of 5
-        let mut out: String = self.encoded.chunks(5)
+        let mut out: Vec<u8> = self.encoded.chunks(5)
             .map(ASCII85::decode_slice)
             .map(ASCII85::bits_to_ascii)
             .flat_map(|chars| chars.into_iter())
             .collect();
 
         //If padding was added at the start, skip that many bytes from the end
-        let _ = out.split_off(out.len() - needed);
+        (0..needed).for_each(|_| {
+            out.pop();
+        });
+
         out
     }
 }
@@ -86,7 +96,7 @@ mod tests {
 
         // let (encoded, expected) = test_in.lines().
         let asc = ASCII85::new(encoded);
-        let out = asc.decode();
+        let out = asc.decode_to_string();
         assert_eq!(expected, out);
     }
 }

@@ -27,34 +27,34 @@ fn main() {
 
 /// ASCII85
 fn layer0() {
-    let solved = decode_ascii85("base.txt");
+    let solved = decode_ascii85_string("base.txt");
     write_output("layer1.txt", solved);
 }
 
 /// Bit flip and rotation
 fn layer1() {
-    let ascii85 = decode_ascii85("layer1.txt");
+    let ascii85 = decode_ascii85_string("layer1.txt");
     let solved = layer1::process(ascii85);
     write_output("layer2.txt", solved);
 }
 
 /// Parity bits
 fn layer2() {
-    let ascii85 = decode_ascii85("layer2.txt");
+    let ascii85 = decode_ascii85_string("layer2.txt");
     let solved = layer2::process(ascii85);
     write_output("layer3.txt", solved);
 }
 
 /// XOR encryption
 fn layer3() {
-    let payload = decode_ascii85("layer3.txt");
+    let payload = decode_ascii85_string("layer3.txt");
     let solved = layer3::process(payload);
     write_output("layer4.txt", solved);
 }
 
 /// Packets!
 fn layer4() {
-    let payload = decode_ascii85("layer4.txt");
+    let payload = decode_ascii85_string("layer4.txt");
     let solved = layer4::process(payload);
     write_output("layer5.txt", solved);
 }
@@ -69,10 +69,10 @@ fn find_payload(input: String) -> String {
         .collect()
 }
 
-fn decode_ascii85(path: &str) -> String {
+fn decode_ascii85_string(path: &str) -> String {
     let file = read_to_string(path).expect("Missing file");
     let encoded: String = find_payload(file);
-    ASCII85::new(encoded).decode()
+    ASCII85::new(encoded).decode_to_string()
 }
 
 fn write_output(path: &str, contents: String) {
