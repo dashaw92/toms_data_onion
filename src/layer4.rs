@@ -32,4 +32,5 @@ fn is_valid(packet: &V4Packet, criteria: &Criteria) -> bool {
     packet.source == criteria.ip_from 
     && packet.udp.dest_port == criteria.port_to 
     && packet.dest == criteria.ip_to
+    && packet.hdr_checksum == packet.computed_checksum
 }

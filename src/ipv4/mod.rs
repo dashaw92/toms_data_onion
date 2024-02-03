@@ -11,8 +11,7 @@ pub struct V4Packet {
     pub version: u8,
     pub ihl: u8,
     pub length: u16,
-    pub ttl: u8,
-    pub proto: u8,
+    pub computed_checksum: u16,
     pub hdr_checksum: u16,
     pub source: u32,
     pub dest: u32,
@@ -21,6 +20,20 @@ pub struct V4Packet {
 
 impl V4Packet {
     pub fn read_from_stream(buf: &mut impl BudgetByteorder) -> Option<Self> {
+        let mut header: Vec<u16> = buf.read_many_u8(20)?.chunks(2)
+            .map(|bytes| (bytes[0] as u16) << 8 | bytes[1] as u16)
+            .collect();
+        header[5] = 0; //don't consider the checksum in the packet when computing the checksum
+        let computed_checksum: u16 = !header.into_iter().fold(0, |acc, next| {
+            let (sum, carry) = acc.overflowing_add(next);
+            if carry {
+                sum + 1
+            } else {
+                sum
+            }
+        });
+        buf.seek(-20).ok()?;
+
         let byte = buf.read_u8()?;
 
         let version = (byte & 0xF0) >> 4;
@@ -29,12 +42,12 @@ impl V4Packet {
         buf.read_u8()?;
 
         let length = buf.read_u16()?;
-        buf.read_u16()?;
 
         buf.read_u16()?;
-
-        let ttl = buf.read_u8()?;
-        let proto = buf.read_u8()?;
+        buf.read_u16()?;
+        buf.read_u8()?;
+        buf.read_u8()?;
+        
         let hdr_checksum = buf.read_u16()?;
         let source = buf.read_u32()?;
         let dest = buf.read_u32()?;
@@ -42,12 +55,12 @@ impl V4Packet {
         let data_len = (length - (ihl as u16 * 32 / 8)) as usize;
         let udp = UDP::parse(buf.read_many_u8(data_len)?)?;
 
+
         Some(Self {
             version,
             ihl,
             length,
-            ttl,
-            proto,
+            computed_checksum,
             hdr_checksum,
             source,
             dest,
